@@ -1,0 +1,36 @@
+name: GitHub Pages
+permissions:
+  contents: write
+on:
+  push:
+    branches:
+    - main
+jobs:
+  build:
+    name: Build Documentation
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v2
+    - name: Setup illuaminate
+      run: |
+        trap 'echo "Error occurred during setup"; exit $?' ERR
+        test -d bin || mkdir bin
+        test -f bin/illuaminate || wget -q -Obin/illuaminate https://squiddev.cc/illuaminate/bin/latest/illuaminate-linux-x86_64
+        chmod +x bin/illuaminate
+
+    - name: Generate documentation
+      run: |
+        chmod +x bin/illuaminate
+        if [ ! -x "bin/illuaminate" ]; then
+          echo "illuaminate is not executable!"
+          exit 1
+        fi
+        bin/illuaminate doc-gen
+        
+    - name: Deploy
+      uses: peaceiris/actions-gh-pages@v3
+      with:
+        github_token: ${{ secrets.GITHUB_TOKEN }}
+        publish_dir: ./build
+        force_orphan: true
+        commit_message: Build for
